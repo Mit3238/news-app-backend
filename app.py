@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import feedparser
 from datetime import datetime, timedelta
-import pytz
 from gtts import gTTS
 import os
 
@@ -18,7 +17,7 @@ rss = {"india":"https://www.thehindu.com/news/national/feeder/default.rss",
 
 @app.route('/', methods=['GET'])
 def index():
-    return jsonify({'message': 'Hello, World!'})
+    return jsonify({'message': 'Hello, from NEWS app!'})
 
 @app.route('/total-feeds', methods=['GET'])
 def total_feeds():
