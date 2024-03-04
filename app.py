@@ -109,7 +109,7 @@ def news_refresh():
                 os.remove(f'data/{key}/{file}')
                 os.remove(f'data/{key}/audio/{file}.mp3')
 
-        yesterday = datetime.now() - timedelta(hours=24)
+        yesterday = datetime.now() - timedelta(hours=48)
 
         new = 0
         for i in range(0, len(feed_data['entries'])):
