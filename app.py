@@ -15,6 +15,7 @@ rss = {"india":"https://www.thehindu.com/news/national/feeder/default.rss",
        "Economy":"https://www.thehindu.com/business/Economy/feeder/default.rss",
        "Markets":"https://www.thehindu.com/business/markets/feeder/default.rss"}
 
+os.makedirs('data', exist_ok=True)
 for key in rss.keys():
     if key not in os.listdir('data'):
         os.mkdir(f'data/{key}')
