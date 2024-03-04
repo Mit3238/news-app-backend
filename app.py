@@ -75,6 +75,7 @@ def news():
 
 @app.route('/news-refresh', methods=['GET'])
 def news_refresh():
+    total = 0
     for key in rss.keys():
         rss_url = rss[key]
         # rss_url = "https://www.thehindu.com/news/international/feeder/default.rss"  
@@ -108,7 +109,7 @@ def news_refresh():
                 os.remove(f'data/{key}/{file}')
                 os.remove(f'data/{key}/audio/{file}.mp3')
 
-        yesterday = datetime.now() - timedelta(hours=12)
+        yesterday = datetime.now() - timedelta(hours=24)
 
         new = 0
         for i in range(0, len(feed_data['entries'])):
@@ -119,6 +120,7 @@ def news_refresh():
                 if file_name + '.txt' not in os.listdir(f'data/{key}'):
                     txt = ''
                     new += 1
+                    total += 1
                     print(new)
                     with open(f'data/{key}/{file_name}.txt', 'w') as f:
                         f.write(feed_data['entries'][i]['title'] + "\n")
@@ -129,7 +131,7 @@ def news_refresh():
                     tts = gTTS(text=txt, lang='en')
                     tts.save(f'data/{key}/audio/{file_name}.mp3')
 
-    return jsonify({'new': new})
+    return jsonify({'new': total})
 
 @app.route('/news-list', methods=['GET'])
 def news_list():
