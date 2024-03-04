@@ -15,6 +15,12 @@ rss = {"india":"https://www.thehindu.com/news/national/feeder/default.rss",
        "Economy":"https://www.thehindu.com/business/Economy/feeder/default.rss",
        "Markets":"https://www.thehindu.com/business/markets/feeder/default.rss"}
 
+for key in rss.keys():
+    if key not in os.listdir('data'):
+        os.mkdir(f'data/{key}')
+    if 'audio' not in os.listdir(f'data/{key}'):
+        os.mkdir(f'data/{key}/audio')
+
 @app.route('/', methods=['GET'])
 def index():
     return jsonify({'message': 'Hello, from NEWS app!'})
@@ -68,48 +74,59 @@ def news():
 
 @app.route('/news-refresh', methods=['GET'])
 def news_refresh():
-    rss_url = "https://www.thehindu.com/news/international/feeder/default.rss"  
+    for key in rss.keys():
+        rss_url = rss[key]
+        # rss_url = "https://www.thehindu.com/news/international/feeder/default.rss"  
 
-    feed = feedparser.parse(rss_url)
+        feed = feedparser.parse(rss_url)
 
-    if feed.bozo:  # Check for potential errors
-        raise Exception("Error parsing RSS feed")
+        if feed.bozo:  # Check for potential errors
+            raise Exception("Error parsing RSS feed")
 
-    feed_data = {
-        'title': feed.feed.get('title', ''),
-        'link': feed.feed.get('link', ''),
-        'description': feed.feed.get('description', ''),
-        'entries': []
-    }
+        feed_data = {
+            'title': feed.feed.get('title', ''),
+            'link': feed.feed.get('link', ''),
+            'description': feed.feed.get('description', ''),
+            'entries': []
+        }
 
-    for entry in feed.entries:
-        feed_data['entries'].append({
-            'title': entry.get('title', ''),
-            'link': entry.get('link', ''),
-            'published': entry.get('published', ''),
-            'summary': entry.get('summary', '') 
-        })
+        for entry in feed.entries:
+            feed_data['entries'].append({
+                'title': entry.get('title', ''),
+                'link': entry.get('link', ''),
+                'published': entry.get('published', ''),
+                'summary': entry.get('summary', '') 
+            })
 
-    yesterday = datetime.now() - timedelta(days=1)
+        last_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=2)
+        files = os.listdir(f'data/{key}')
+        files.remove('audio')
+        for file in files:
+            date = datetime.strptime(file.split('.')[0], "%Y-%m-%d-%H-%M-%S")
+            if date < last_date:
+                os.remove(f'data/{key}/{file}')
+                os.remove(f'data/{key}/audio/{file}.mp3')
 
-    new = 0
-    for i in range(0, len(feed_data['entries'])):
-        date = datetime.strptime(feed_data['entries'][i]['published'], "%a, %d %b %Y %H:%M:%S %z")
-        date = date.replace(tzinfo=None)
-        if date > yesterday:
-            file_name = f'{datetime.strftime(datetime.now(), "%Y-%m-%d-%H-%M-%S")}'
-            if file_name + '.txt' not in os.listdir('data/news'):
-                txt = ''
-                new += 1
-                print(new)
-                with open(f'data/news/{file_name}.txt', 'w') as f:
-                    f.write(feed_data['entries'][i]['title'] + "\n")
-                    txt += feed_data['entries'][i]['title'] + "\n"
-                    if feed_data['entries'][i]['summary'] != '':
-                        f.write(feed_data['entries'][i]['summary'] + "\n")
-                        txt += feed_data['entries'][i]['summary'] + "\n"
-                tts = gTTS(text=txt, lang='en')
-                tts.save(f'data/news/audio/{file_name}.mp3')
+        yesterday = datetime.now() - timedelta(hours=12)
+
+        new = 0
+        for i in range(0, len(feed_data['entries'])):
+            date = datetime.strptime(feed_data['entries'][i]['published'], "%a, %d %b %Y %H:%M:%S %z")
+            date = date.replace(tzinfo=None)
+            if date > yesterday:
+                file_name = f'{datetime.strftime(datetime.now(), "%Y-%m-%d-%H-%M-%S")}'
+                if file_name + '.txt' not in os.listdir(f'data/{key}'):
+                    txt = ''
+                    new += 1
+                    print(new)
+                    with open(f'data/{key}/{file_name}.txt', 'w') as f:
+                        f.write(feed_data['entries'][i]['title'] + "\n")
+                        txt += feed_data['entries'][i]['title'] + "\n"
+                        if feed_data['entries'][i]['summary'] != '':
+                            f.write(feed_data['entries'][i]['summary'] + "\n")
+                            txt += feed_data['entries'][i]['summary'] + "\n"
+                    tts = gTTS(text=txt, lang='en')
+                    tts.save(f'data/{key}/audio/{file_name}.mp3')
 
     return jsonify({'new': new})
 
@@ -122,7 +139,7 @@ def news_send(name, start, end):
     print(name)
     end = int(end)
     start = int(start)
-    files = os.listdir('data/news')
+    files = os.listdir(f'data/{name}')
     files.remove('audio')
     files.sort(reverse=True)
     files = files[start:end]
@@ -132,7 +149,7 @@ def news_send(name, start, end):
 
     res = {'files': files, 'data':{}}
     for file in files:
-        with open(f'data/news/{file}.txt', 'r') as f:
+        with open(f'data/{name}/{file}.txt', 'r') as f:
             res['data'][file] = f.read()
 
     return jsonify(res)
@@ -141,7 +158,7 @@ def news_send(name, start, end):
 @app.route('/news-audio/<name>/<date>', methods=['GET'])
 def news_audio(name, date):
     print(name)
-    return send_file(f'data/news/audio/{date}.mp3')
+    return send_file(f'data/{name}/audio/{date}.mp3')
 
 if __name__ == '__main__':
     app.run(debug=True)
