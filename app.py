@@ -10,8 +10,8 @@ CORS(app)
 
 # save all data in catorgories folders like india, international, Economy, Markets
 
-rss = {"india":"https://www.thehindu.com/news/national/feeder/default.rss",
-       "world":"https://www.thehindu.com/news/international/feeder/default.rss",
+rss = {"India":"https://www.thehindu.com/news/national/feeder/default.rss",
+       "World":"https://www.thehindu.com/news/international/feeder/default.rss",
        "Economy":"https://www.thehindu.com/business/Economy/feeder/default.rss",
        "Markets":"https://www.thehindu.com/business/markets/feeder/default.rss"}
 
@@ -116,7 +116,7 @@ def news_refresh():
             date = datetime.strptime(feed_data['entries'][i]['published'], "%a, %d %b %Y %H:%M:%S %z")
             date = date.replace(tzinfo=None)
             if date > yesterday:
-                file_name = f'{datetime.strftime(datetime.now(), "%Y-%m-%d-%H-%M-%S")}'
+                file_name = f'{datetime.strftime(date, "%Y-%m-%d-%H-%M-%S")}'
                 if file_name + '.txt' not in os.listdir(f'data/{key}'):
                     txt = ''
                     new += 1
